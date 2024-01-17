@@ -2,6 +2,19 @@ import fs from 'fs'
 import { Extension, applicationCommand, listener } from '@pikokr/command.ts'
 import { ApplicationCommandType, ChatInputCommandInteraction, Message} from 'discord.js'
 
+interface ConversationItem {
+  id: string
+  output: string
+}
+
+interface KoiDB {
+  conversation: ConversationItem[]
+}
+
+const jsonFile = fs.readFileSync('./data.json', 'utf8')
+const jsonData = JSON.parse(jsonFile)
+const messageList: KoiDB = jsonData.conversation
+
 class HelloExtension extends Extension {
   @listener({ event: 'ready' })
   async ready() {
@@ -16,16 +29,11 @@ class HelloExtension extends Extension {
 
   @listener({ event: 'messageCreate', emitter: 'discord'})
   async messageHandle(msg: Message) {
-    if (msg.content.slice(0, 4) != '코이야 ')
+    if (msg.content.startsWith('코이야 '))
       return
-    const jsonFile = fs.readFileSync('./data.json', 'utf8')
-    const jsonData = JSON.parse(jsonFile)
-    const messageList = jsonData.Conversation;
-    messageList.forEach(async (message: any) => {
-      if(message.id == msg.content.slice(4)){
-        await msg.reply(message.Output)
-      }
-    });
+    
+    const answer = messageList.find((message: ConversationItem) => message.id === msg.content.slice(4))
+    await msg.reply(answer)
   }
 
   @applicationCommand({
