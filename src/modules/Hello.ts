@@ -8,12 +8,12 @@ interface ConversationItem {
 }
 
 interface KoiDB {
-  conversation: ConversationItem[]
+  conversations: ConversationItem[]
 }
 
 const jsonFile = fs.readFileSync('./data.json', 'utf8')
-const jsonData = JSON.parse(jsonFile)
-const messageList: KoiDB = jsonData.conversation
+const jsonData: KoiDB  = JSON.parse(jsonFile)
+const messageList = jsonData.conversations
 
 class HelloExtension extends Extension {
   @listener({ event: 'ready' })
@@ -29,11 +29,18 @@ class HelloExtension extends Extension {
 
   @listener({ event: 'messageCreate', emitter: 'discord'})
   async messageHandle(msg: Message) {
-    if (msg.content.startsWith('코이야 '))
+    if (msg.content.startsWith('코이야 ')){
       return
+    }
     
-    const answer = messageList.find((message: ConversationItem) => message.id === msg.content.slice(4))
-    await msg.reply(answer)
+    const keyword = msg.content.slice(4)
+    const answer = messageList.find((message) => message.id === keyword)
+
+    if(!answer){
+      return msg.reply('내가 모르는 말이야...!')
+    }
+
+    await msg.reply(answer.output)
   }
 
   @applicationCommand({
