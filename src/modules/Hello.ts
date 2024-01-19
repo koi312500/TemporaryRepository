@@ -1,7 +1,7 @@
 import fs from 'fs'
 import axios from 'axios'
-import { Extension, applicationCommand, listener } from '@pikokr/command.ts'
-import { ApplicationCommandType, ChatInputCommandInteraction, Message} from 'discord.js'
+import { Extension, applicationCommand, listener, option } from '@pikokr/command.ts'
+import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction, Message} from 'discord.js'
 
 interface ConversationItem {
   id: string
@@ -42,6 +42,24 @@ class HelloExtension extends Extension {
     }
 
     await msg.reply(answer.output)
+  }
+
+  @applicationCommand({
+    name: '명령어추가',
+    type: ApplicationCommandType.ChatInput,
+    description: 'Search novel at muvel',
+  })
+  async commandAdd(
+    i: ChatInputCommandInteraction, 
+    @option({
+      type: ApplicationCommandOptionType.String,
+      name: 'Input',
+      description: 'Input the command input',
+      required: true,
+    })
+    input: string) {
+    
+    await i.reply(`Debug`)
   }
 
   @applicationCommand({

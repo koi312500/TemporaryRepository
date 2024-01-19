@@ -56,12 +56,12 @@ class NovelExtension extends Extension {
     const novelEmbed = new EmbedBuilder()
       .setColor(0x0ab1c2)
       .setTitle(`소설 검색 : ${novelNow.title}`)
-      .setThumbnail(`${novelNow.thumbnail}`)
+      .setThumbnail(`${novelNow.thumbnail} `)
       .addFields(
-        { name: '소설 설명', value : `${novelNow.description}`},
-        { name: '소설 작가', value : `${novelNow.author.username}`},
-        { name: 'CreatedAt', value : `${novelNow.createdAt}`},
-        { name: 'UpdateAt', value: `${novelNow.updatedAt}`}
+        { name: '소설 설명', value : `${novelNow.description} `},
+        { name: '소설 작가', value : `${novelNow.author.username} `},
+        { name: 'CreatedAt', value : `${novelNow.createdAt} `},
+        { name: 'UpdateAt', value: `${novelNow.updatedAt} `}
       )
       .setFooter({ text: 'Result of command /뮤블검색'})
 
