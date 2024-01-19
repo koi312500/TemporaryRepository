@@ -48,7 +48,11 @@ class NovelExtension extends Extension {
         console.log(error)
         return
     }
-    console.log(novelNow.author)
+    if(!novelNow){
+      await i.reply('해당하는 소설이 없습니다.')
+      return
+    }
+    
     const novelEmbed = new EmbedBuilder()
       .setColor(0x0ab1c2)
       .setTitle(`소설 검색 : ${novelNow.title}`)
