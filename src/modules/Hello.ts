@@ -1,4 +1,5 @@
 import fs from 'fs'
+import axios from 'axios'
 import { Extension, applicationCommand, listener } from '@pikokr/command.ts'
 import { ApplicationCommandType, ChatInputCommandInteraction, Message} from 'discord.js'
 
@@ -29,7 +30,7 @@ class HelloExtension extends Extension {
 
   @listener({ event: 'messageCreate', emitter: 'discord'})
   async messageHandle(msg: Message) {
-    if (msg.content.startsWith('코이야 ')){
+    if (!msg.content.startsWith('코이야 ')){
       return
     }
     
@@ -51,6 +52,7 @@ class HelloExtension extends Extension {
   async ping(i: ChatInputCommandInteraction) {
     await i.reply(`Hello, hon20ke!`)
   }
+
 }
 
 export const setup = async () => {
