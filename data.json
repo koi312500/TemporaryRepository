@@ -1,5 +1,5 @@
 {
-    "conversation": [
+    "conversations": [
         {
             "id": "안녕",
             "output": "Hello!"

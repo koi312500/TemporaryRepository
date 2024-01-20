@@ -14,7 +14,7 @@ interface KoiDB {
 
 const jsonFile = fs.readFileSync('./data.json', 'utf8')
 const jsonData: KoiDB  = JSON.parse(jsonFile)
-const messageList = jsonData.conversations
+let messageList = jsonData.conversations
 
 class HelloExtension extends Extension {
   @listener({ event: 'ready' })
@@ -45,21 +45,41 @@ class HelloExtension extends Extension {
   }
 
   @applicationCommand({
-    name: '명령어추가',
+    name: '배워',
     type: ApplicationCommandType.ChatInput,
     description: 'Search novel at muvel',
   })
-  async commandAdd(
+  async learnCommand(
     i: ChatInputCommandInteraction, 
     @option({
       type: ApplicationCommandOptionType.String,
-      name: 'Input',
+      name: 'keyword',
       description: 'Input the command input',
       required: true,
     })
-    input: string) {
-    
-    await i.reply(`Debug`)
+    keyword: string,
+    @option({
+      type: ApplicationCommandOptionType.String,
+      name: 'reaction',
+      description: 'Input the command output',
+      required: true,
+    })
+    reaction: string,) {
+
+    const addReaction: ConversationItem = {
+      "id": keyword,
+      "output": reaction
+    }
+
+    messageList = [...messageList, addReaction];
+    const dataDB: KoiDB = {
+      conversations : messageList
+    }
+    const dataJSON = JSON.stringify(dataDB)
+
+    fs.writeFileSync('data.json', dataJSON)
+
+    await i.reply(`${keyword} 라고 물어보면 ${reaction}이라고 대답하면 된다고요? 알겠어요!`)
   }
 
   @applicationCommand({

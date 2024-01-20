@@ -40,11 +40,9 @@ class NovelExtension extends Extension {
     await i.deferReply()
     let novelNow: NovelItem;
     try{
-      console.log('https://muvel.kimustory.net/api/novels' + (title?`?title=${title}`:''))
       const {data} = await axios.get<NovelItem[]>('https://muvel.kimustory.net/api/novels' + (title?`?title=${title}`:''))
       novelNow = data[0]
     } catch (error){
-        console.log('Debug')
         if (axios.isAxiosError(error)){
           return i.reply('API 통신 오류입니다. 잠시후 다시 시도해 주시기 바랍니다.')
         }
