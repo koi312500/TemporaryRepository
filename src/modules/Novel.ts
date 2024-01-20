@@ -27,7 +27,7 @@ class NovelExtension extends Extension {
     type: ApplicationCommandType.ChatInput,
     description: 'Search novel at muvel',
   })
-  async novelsearchc(
+  async novelsearch(
     i: ChatInputCommandInteraction, 
     @option({
       type: ApplicationCommandOptionType.String,
@@ -36,21 +36,23 @@ class NovelExtension extends Extension {
       required: false,
     })
     title: string) {
-    var URL = `https://muvel.kimustory.net/api/novels`
-    if(title){
-        URL = URL + '?title=' + title
-    }
-    var novelNow!: NovelItem;
+
+    await i.deferReply()
+    let novelNow: NovelItem;
     try{
-      const {data} = await axios.get<NovelItem[]>(URL)
+      console.log('https://muvel.kimustory.net/api/novels' + (title?`?title=${title}`:''))
+      const {data} = await axios.get<NovelItem[]>('https://muvel.kimustory.net/api/novels' + (title?`?title=${title}`:''))
       novelNow = data[0]
     } catch (error){
-        console.log(error)
-        return
+        console.log('Debug')
+        if (axios.isAxiosError(error)){
+          return i.reply('API 통신 오류입니다. 잠시후 다시 시도해 주시기 바랍니다.')
+        }
+        this.logger.error(error)
+        return i.reply(`오류가 발생했습니다. :(`)
     }
     if(!novelNow){
-      await i.reply('해당하는 소설이 없습니다.')
-      return
+      return i.reply('해당하는 소설이 없습니다.')
     }
     
     const novelEmbed = new EmbedBuilder()
@@ -61,11 +63,12 @@ class NovelExtension extends Extension {
         { name: '소설 설명', value : `${novelNow.description} `},
         { name: '소설 작가', value : `${novelNow.author.username} `},
         { name: 'CreatedAt', value : `${novelNow.createdAt} `},
-        { name: 'UpdateAt', value: `${novelNow.updatedAt} `}
+        { name: 'UpdateAt', value: `${novelNow.updatedAt} `} 
       )
       .setFooter({ text: 'Result of command /뮤블검색'})
+      
 
-    await i.reply({embeds : [novelEmbed]})
+    await i.editReply({embeds : [novelEmbed]})
   }
 
 }
