@@ -35,7 +35,7 @@ class HelloExtension extends Extension {
     }
     
     const keyword = msg.content.slice(4)
-    const answer = messageList.find((message) => message.id === keyword)
+    const answer = messageList.find((message) => message.id.includes(keyword))
 
     if(!answer){
       return msg.reply('내가 모르는 말이야...!')
@@ -47,7 +47,7 @@ class HelloExtension extends Extension {
   @applicationCommand({
     name: '배워',
     type: ApplicationCommandType.ChatInput,
-    description: 'Search novel at muvel',
+    description: 'Learn reaction by Koi_Bot',
   })
   async learnCommand(
     i: ChatInputCommandInteraction, 
@@ -66,12 +66,12 @@ class HelloExtension extends Extension {
     })
     reaction: string,) {
 
-    const addReaction: ConversationItem = {
+    messageList = 
+    [...messageList, {
       "id": keyword,
       "output": reaction
-    }
+    }]
 
-    messageList = [...messageList, addReaction];
     const dataDB: KoiDB = {
       conversations : messageList
     }
