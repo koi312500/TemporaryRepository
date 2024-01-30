@@ -1,12 +1,31 @@
 import axios from 'axios'
-import { Extension, applicationCommand, listener, option } from '@pikokr/command.ts'
-import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction, EmbedBuilder, Message, User} from 'discord.js'
+import { Extension, applicationCommand, listener, option, CommandClient, ComponentHookFn, createComponentHook, OwnerOnlyError } from '@pikokr/command.ts'
+import { ApplicationCommandOptionType, ApplicationCommandType, BaseInteraction, ChatInputCommandInteraction, EmbedBuilder, Interaction, Message, User} from 'discord.js'
 import { UserDB } from "../../entities/UserDB"
 import AppDataSource from "../index"
 
 const cooldown = new Set()
 const continunityCooldown = new Set()
 
+export const createCheckDecorator = (fn: ComponentHookFn<[CommandClient, Interaction | Message]>) => createComponentHook('beforeCall', fn)
+export const registerOnly = createCheckDecorator(async (client: CommandClient, i: Interaction | Message) => {
+  let isRegistered = false
+  const userRepository = AppDataSource.getRepository(UserDB)
+  
+  if (i instanceof BaseInteraction) {
+    client
+    isRegistered = await userRepository.findOneBy({id: i.user.id,}) != null
+  } else if (i instanceof Message) {
+    isRegistered = await userRepository.findOneBy({id: i.author.id,}) != null
+  }
+
+  if (!isRegistered){
+    if(i.channel){
+      i.channel.send("등록이 된걸까....?")
+    }
+    throw "registerOnlyError"
+  }
+})
 
 class GameExtension extends Extension {
   @applicationCommand({
@@ -30,7 +49,6 @@ class GameExtension extends Extension {
     if(nowUser != null){
       return i.reply("이미 등록을 마치셨어요!")
     }
-    
     const user = new UserDB()
     user.id = i.user.id
     user.name = name
@@ -40,6 +58,7 @@ class GameExtension extends Extension {
     await i.reply("Register complete!")
   }
 
+  @registerOnly
   @applicationCommand({
     name: '출석',
     type: ApplicationCommandType.ChatInput,
@@ -50,10 +69,9 @@ class GameExtension extends Extension {
     const nowUser = await userRepository.findOneBy({
       id: i.user.id,
     })
-    if(nowUser == null){
-      return i.reply("아직 등록이 안된거 같아요..")
-    }
-    
+    if(!nowUser)
+      return i.reply("먼가 이상한데")
+
     if(cooldown.has(nowUser.id)){
       return i.reply("이 명령어는 23시간마다 사용할 수 있어요! 기다려 주세요!")
     }
