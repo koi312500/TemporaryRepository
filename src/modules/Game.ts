@@ -1,8 +1,8 @@
 import fs from 'fs'
 import { Extension, applicationCommand, option, CommandClient, ComponentHookFn, createComponentHook, createCheckDecorator} from '@pikokr/command.ts'
 import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, BaseInteraction, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, Interaction, Message} from 'discord.js'
-import { UserDB } from "../entities/UserDB"
-import AppDataSource from "../index"
+import { UserEntity } from "../entities/UserEntity"
+import { AppDataSource } from "../index"
 
 const cooldown = new Set()
 const continunityCooldown = new Set()
@@ -23,7 +23,7 @@ const outputList = jsonData.companyOutputs
 
 export const registerOnly = createCheckDecorator(async (client: CommandClient, i: Interaction | Message) => {
   let isRegistered = false
-  const userRepository = AppDataSource.getRepository(UserDB)
+  const userRepository = AppDataSource.getRepository(UserEntity)
   
   if (i instanceof BaseInteraction) {
     client
@@ -55,14 +55,14 @@ class GameExtension extends Extension {
       required: true,
     })
     name: string,) {
-    const userRepository = AppDataSource.getRepository(UserDB)
+    const userRepository = AppDataSource.getRepository(UserEntity)
     const nowUser = await userRepository.findOneBy({
       id: i.user.id,
     })
     if(nowUser != null){
       return i.reply("이미 등록을 마치셨어요!")
     }
-    const user = new UserDB()
+    const user = new UserEntity()
     user.id = i.user.id
     user.name = name
     user.money = 0
@@ -78,7 +78,7 @@ class GameExtension extends Extension {
     description: 'Daily attendace',
   })
   async attendanceCommand(i: ChatInputCommandInteraction){
-    const userRepository = AppDataSource.getRepository(UserDB)
+    const userRepository = AppDataSource.getRepository(UserEntity)
     const nowUser = await userRepository.findOneBy({
       id: i.user.id,
     })
@@ -133,7 +133,7 @@ class GameExtension extends Extension {
     })
     amount: number,){
     
-    const userRepository = AppDataSource.getRepository(UserDB)
+    const userRepository = AppDataSource.getRepository(UserEntity)
     const nowUser = await userRepository.findOneBy({
       id: i.user.id,
     })
