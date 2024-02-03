@@ -1,7 +1,7 @@
 import fs from 'fs'
 import { Extension, applicationCommand, option, CommandClient, ComponentHookFn, createComponentHook, createCheckDecorator} from '@pikokr/command.ts'
 import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, BaseInteraction, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, Interaction, Message} from 'discord.js'
-import { UserDB } from "../../entities/UserDB"
+import { UserDB } from "../entities/UserDB"
 import AppDataSource from "../index"
 
 const cooldown = new Set()
@@ -17,7 +17,7 @@ interface KoiDB2 {
   companyOutputs: CompanyOutputItem[]
 }
 
-const jsonFile = fs.readFileSync('./CompanyData.json', 'utf8')
+const jsonFile = fs.readFileSync('./resource/company-data.json', 'utf8')
 const jsonData: KoiDB2 = JSON.parse(jsonFile)
 const outputList = jsonData.companyOutputs
 

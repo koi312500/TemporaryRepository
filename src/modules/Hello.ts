@@ -12,7 +12,7 @@ interface KoiDB {
   conversations: ConversationItem[]
 }
 
-const jsonFile = fs.readFileSync('./ConversationData.json', 'utf8')
+const jsonFile = fs.readFileSync('./resource/conversation-data.json', 'utf8')
 const jsonData: KoiDB  = JSON.parse(jsonFile)
 let messageList = jsonData.conversations
 
