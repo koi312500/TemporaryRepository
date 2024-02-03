@@ -1,4 +1,5 @@
-import { Extension, applicationCommand, option, CommandClient, ComponentHookFn, createComponentHook} from '@pikokr/command.ts'
+import fs from 'fs'
+import { Extension, applicationCommand, option, CommandClient, ComponentHookFn, createComponentHook, createCheckDecorator} from '@pikokr/command.ts'
 import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, BaseInteraction, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, Interaction, Message} from 'discord.js'
 import { UserDB } from "../../entities/UserDB"
 import AppDataSource from "../index"
@@ -6,7 +7,20 @@ import AppDataSource from "../index"
 const cooldown = new Set()
 const continunityCooldown = new Set()
 
-export const createCheckDecorator = (fn: ComponentHookFn<[CommandClient, Interaction | Message]>) => createComponentHook('beforeCall', fn)
+interface CompanyOutputItem {
+  id: number
+  name: string
+  output: string[]
+}
+
+interface KoiDB2 {
+  companyOutputs: CompanyOutputItem[]
+}
+
+const jsonFile = fs.readFileSync('./CompanyData.json', 'utf8')
+const jsonData: KoiDB2 = JSON.parse(jsonFile)
+const outputList = jsonData.companyOutputs
+
 export const registerOnly = createCheckDecorator(async (client: CommandClient, i: Interaction | Message) => {
   let isRegistered = false
   const userRepository = AppDataSource.getRepository(UserDB)
@@ -119,7 +133,6 @@ class GameExtension extends Extension {
     })
     amount: number,){
     
-    const sleep = async (ms:number) => await new Promise(r => setTimeout(r,ms)); 
     const userRepository = AppDataSource.getRepository(UserDB)
     const nowUser = await userRepository.findOneBy({
       id: i.user.id,
@@ -160,39 +173,48 @@ class GameExtension extends Extension {
       amount = amount - 5
       const opt = Math.random() * 100
       let earn = Math.random()
+      let type = 0
       if (opt <= 5){
+        type = 0
         earn = -100
-        nowEmbed.setFields({name : "파산", value : `모든 돈을 잃어 버렸다! (${earn}%)`})
       }
       else if (opt <= 25){
+        type = 1
         earn = Math.round(-(10 + earn * 20))
-        nowEmbed.setFields({name : "손해를 봤다...", value : `돈을 크게 잃었다! (${earn}%)`})
       }
       else if (opt <= 75){
+        type = 2
         earn = Math.round(-5 + earn * 10)
-        nowEmbed.setFields({name : "무난한 순황", value : `크게 변화는 없다.. (${earn}%)`})
       }
       else if (opt <= 95){
+        type = 3
         earn = Math.round(10 + earn * 20)
-        nowEmbed.setFields({name : "좋은 일이 생겼다!", value : `돈을 크게 벌었다! (${earn}%)`})
       }
       else if (opt <= 99.5){
+        type = 4
         earn = Math.round(100 + earn * 100)
-        nowEmbed.setFields({name : "대박이야!!!!", value : `돈을 엄청 크게 벌었다! (${earn}%)`})
       }
       else{
+        type = 5
         earn = 500
-        nowEmbed.setFields({name : "초대박이야!!!!", value : `테O라...?? (${earn}%)`})
       }
       amount = Math.round(amount + amount * earn / 100)
       turn = turn + 1
+
+      const answerList = outputList.find((message) => message.id == type)?.output
+      const name = outputList.find((message) => message.id == type)?.name
+      const answer = answerList ? answerList[Math.floor(Math.random() * answerList.length)] : ""
+      nowEmbed.setFields(
+        {name: `${name}`, value: `${answer} (${earn}%)`},
+        {name: '보유 자금', value : `${amount}코인 (초기 투자금 : ${startCoin}코인 / 유지비 5코인)`},
+      )
       nowEmbed.setDescription(`현재 턴 수 : ${turn}`)
-      nowEmbed.addFields({name: '보유 자금', value : `${amount}코인 (초기 투자금 : ${startCoin}코인 / 유지비 5코인)`})
+
       try {
         const msg = await i.editReply({embeds : [nowEmbed], components: [row]})
         const collectorFilter = (msg:ButtonInteraction) => msg.user.id === i.user.id;
         try {
-          const confirmation = await msg.awaitMessageComponent({ filter: collectorFilter, componentType: ComponentType.Button, time: 10_000 });
+          const confirmation = await msg.awaitMessageComponent({ filter: collectorFilter, componentType: ComponentType.Button, time: 30_000 });
           if(confirmation.customId === 'stop'){
             await confirmation.update({content: "게임이 종료되었습니다.", embeds : [nowEmbed], components: []})
             nowUser.money += amount
