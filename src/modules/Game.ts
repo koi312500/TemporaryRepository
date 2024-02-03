@@ -1,11 +1,11 @@
 import fs from 'fs'
-import { Extension, applicationCommand, option, CommandClient, ComponentHookFn, createComponentHook, createCheckDecorator} from '@pikokr/command.ts'
-import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, BaseInteraction, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, Interaction, Message} from 'discord.js'
+import { Extension, applicationCommand, option, CommandClient, ComponentHookFn, createComponentHook, createCheckDecorator } from '@pikokr/command.ts'
+import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, BaseInteraction, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, Interaction, Message } from 'discord.js'
 import { UserEntity } from "../entities/UserEntity"
 import { AppDataSource } from "../index"
 
-const cooldown = new Set()
-const continunityCooldown = new Set()
+const cooldown = new Set<string>()
+const continunityCooldown = new Set<String>()
 
 interface CompanyOutputItem {
   id: number
@@ -20,24 +20,23 @@ interface KoiDB2 {
 const jsonFile = fs.readFileSync('./resource/company-data.json', 'utf8')
 const jsonData: KoiDB2 = JSON.parse(jsonFile)
 const outputList = jsonData.companyOutputs
+const userRepository = AppDataSource.getRepository(UserEntity)
 
 export const registerOnly = createCheckDecorator(async (client: CommandClient, i: Interaction | Message) => {
   let isRegistered = false
-  const userRepository = AppDataSource.getRepository(UserEntity)
-  
+
   if (i instanceof BaseInteraction) {
-    client
-    isRegistered = await userRepository.findOneBy({id: i.user.id,}) != null
+    isRegistered = await userRepository.existsBy({ id: i.user.id })
   } else if (i instanceof Message) {
-    isRegistered = await userRepository.findOneBy({id: i.author.id,}) != null
+    isRegistered = await userRepository.existsBy({ id: i.author.id })
   }
 
-  if (!isRegistered){
-    if(i.channel){
-      i.channel.send("등록이 된걸까....?")
-    }
-    throw "registerOnlyError"
+  if (isRegistered) {
+    return
   }
+  await i.channel?.send("등록이 된걸까...?")
+
+  throw new Error("registerOnlyError")
 })
 
 class GameExtension extends Extension {
@@ -55,20 +54,20 @@ class GameExtension extends Extension {
       required: true,
     })
     name: string,) {
-    const userRepository = AppDataSource.getRepository(UserEntity)
+
+    await i.deferReply()
     const nowUser = await userRepository.findOneBy({
       id: i.user.id,
     })
-    if(nowUser != null){
-      return i.reply("이미 등록을 마치셨어요!")
+    if (nowUser) {
+      return i.editReply("이미 등록을 마치셨어요!")
     }
     const user = new UserEntity()
     user.id = i.user.id
     user.name = name
-    user.money = 0
 
     await userRepository.save(user)
-    await i.reply("Register complete!")
+    await i.editReply("Register complete!")
   }
 
   @registerOnly
@@ -77,37 +76,37 @@ class GameExtension extends Extension {
     type: ApplicationCommandType.ChatInput,
     description: 'Daily attendace',
   })
-  async attendanceCommand(i: ChatInputCommandInteraction){
-    const userRepository = AppDataSource.getRepository(UserEntity)
+  async attendanceCommand(i: ChatInputCommandInteraction) {
+    await i.deferReply()
     const nowUser = await userRepository.findOneBy({
       id: i.user.id,
     })
-    if(!nowUser)
-      return i.reply("먼가 이상한데")
+    if (!nowUser)
+      return i.editReply("먼가 이상한데")
 
-    if(cooldown.has(nowUser.id)){
-      return i.reply("이 명령어는 23시간마다 사용할 수 있어요! 기다려 주세요!")
+    if (cooldown.has(nowUser.id)) {
+      return i.editReply("이 명령어는 23시간마다 사용할 수 있어요! 기다려 주세요!")
     }
 
-    if(continunityCooldown.has(nowUser.id)){
+    if (continunityCooldown.has(nowUser.id)) {
       nowUser.money += 150
-      await i.reply(`현재 연속 출석중! 100 + 50코인을 획득해서 현재 ${nowUser.money}코인을 가지고 있어요!`)
+      await i.editReply(`현재 연속 출석중! 100 + 50코인을 획득해서 현재 ${nowUser.money}코인을 가지고 있어요!`)
       continunityCooldown.delete(nowUser.id)
     }
-    else{ 
+    else {
       nowUser.money += 100
-      await i.reply(`100코인을 획득해서 현재 ${nowUser.money}코인을 가지고 있어요!`)
+      await i.editReply(`100코인을 획득해서 현재 ${nowUser.money}코인을 가지고 있어요!`)
     }
     await userRepository.save(nowUser)
 
     cooldown.add(nowUser.id)
-      setTimeout(() => {
-        cooldown.delete(nowUser.id)
-      }, 3600000 * 23)
+    setTimeout(() => {
+      cooldown.delete(nowUser.id)
+    }, 3600000 * 23)
     continunityCooldown.add(nowUser.id)
-      setTimeout(() => {
-        continunityCooldown.delete(nowUser.id)
-      }, 3600000 * 48)
+    setTimeout(() => {
+      continunityCooldown.delete(nowUser.id)
+    }, 3600000 * 48)
   }
 
   @registerOnly
@@ -131,17 +130,17 @@ class GameExtension extends Extension {
       description: 'Company starting money',
       required: true,
     })
-    amount: number,){
-    
-    const userRepository = AppDataSource.getRepository(UserEntity)
+    amount: number,) {
+    i.deferReply()
+
     const nowUser = await userRepository.findOneBy({
       id: i.user.id,
     })
-    if(!nowUser)
-      return i.reply("먼가 이상한데")
+    if (!nowUser)
+      return i.editReply("먼가 이상한데")
 
-    if(nowUser.money < amount)
-      return i.reply("돈 없으면서 사기치지 마라")
+    if (nowUser.money < amount)
+      return i.editReply("돈 없으면서 사기치지 마라")
 
     nowUser.money -= amount
 
@@ -150,51 +149,51 @@ class GameExtension extends Extension {
       .setTitle(`창업 - 기업 : ${companyName}`)
       .setDescription("현재 턴 수 : 0")
       .setTimestamp()
-      .setFooter({text: `${i.user.username}님의 '/창업' 명령어`})
-    
-    await i.reply({embeds: [nowEmbed]})
-    
+      .setFooter({ text: `${i.user.username}님의 '/창업' 명령어` })
+
+    await i.editReply({ embeds: [nowEmbed] })
+
     const continueButton = new ButtonBuilder()
-			.setCustomId('continue')
-			.setLabel('Game Continue')
-			.setStyle(ButtonStyle.Primary)
-    
+      .setCustomId('continue')
+      .setLabel('Game Continue')
+      .setStyle(ButtonStyle.Primary)
+
     const stopButton = new ButtonBuilder()
-			.setCustomId('stop')
-			.setLabel('Stop')
-			.setStyle(ButtonStyle.Danger)
-    
+      .setCustomId('stop')
+      .setLabel('Stop')
+      .setStyle(ButtonStyle.Danger)
+
     const row = new ActionRowBuilder<ButtonBuilder>()
-			.addComponents(continueButton, stopButton)
-    
+      .addComponents(continueButton, stopButton)
+
     const startCoin = amount
     let turn = 0
-    while (amount > 10){
+    while (amount > 10) {
       amount = amount - 5
       const opt = Math.random() * 100
       let earn = Math.random()
       let type = 0
-      if (opt <= 5){
+      if (opt <= 5) {
         type = 0
         earn = -100
       }
-      else if (opt <= 25){
+      else if (opt <= 25) {
         type = 1
         earn = Math.round(-(10 + earn * 20))
       }
-      else if (opt <= 75){
+      else if (opt <= 75) {
         type = 2
         earn = Math.round(-5 + earn * 10)
       }
-      else if (opt <= 95){
+      else if (opt <= 95) {
         type = 3
         earn = Math.round(10 + earn * 20)
       }
-      else if (opt <= 99.5){
+      else if (opt <= 99.5) {
         type = 4
         earn = Math.round(100 + earn * 100)
       }
-      else{
+      else {
         type = 5
         earn = 500
       }
@@ -205,38 +204,38 @@ class GameExtension extends Extension {
       const name = outputList.find((message) => message.id == type)?.name
       const answer = answerList ? answerList[Math.floor(Math.random() * answerList.length)] : ""
       nowEmbed.setFields(
-        {name: `${name}`, value: `${answer} (${earn}%)`},
-        {name: '보유 자금', value : `${amount}코인 (초기 투자금 : ${startCoin}코인 / 유지비 5코인)`},
+        { name: `${name}`, value: `${answer} (${earn}%)` },
+        { name: '보유 자금', value: `${amount}코인 (초기 투자금 : ${startCoin}코인 / 유지비 5코인)` },
       )
       nowEmbed.setDescription(`현재 턴 수 : ${turn}`)
 
       try {
-        const msg = await i.editReply({embeds : [nowEmbed], components: [row]})
-        const collectorFilter = (msg:ButtonInteraction) => msg.user.id === i.user.id;
+        const msg = await i.editReply({ embeds: [nowEmbed], components: [row] })
+        const collectorFilter = (msg: ButtonInteraction) => msg.user.id === i.user.id;
         try {
           const confirmation = await msg.awaitMessageComponent({ filter: collectorFilter, componentType: ComponentType.Button, time: 30_000 });
-          if(confirmation.customId === 'stop'){
-            await confirmation.update({content: "게임이 종료되었습니다.", embeds : [nowEmbed], components: []})
+          if (confirmation.customId === 'stop') {
+            await confirmation.update({ content: "게임이 종료되었습니다.", embeds: [nowEmbed], components: [] })
             nowUser.money += amount
             userRepository.save(nowUser)
             return
           }
-          else{
+          else {
             await confirmation.update({})
           }
         } catch (e) {
-          await i.editReply({content: "반응이 감지되지 않아, 게임이 종료되었습니다.", embeds : [nowEmbed], components: []})
+          await i.editReply({ content: "반응이 감지되지 않아, 게임이 종료되었습니다.", embeds: [nowEmbed], components: [] })
           nowUser.money += amount
           userRepository.save(nowUser)
           return
         }
-      } catch (e){
+      } catch (e) {
         await i.channel!.send(`${i.user} 메세지가 삭제된거 가타...! 너 혹시 돈 날려서 삭제한건... 아니지?\n메세지를 삭제하면 초기자금만 날라가니까 참고해...!`)
         userRepository.save(nowUser)
         return
       }
     }
-    await i.editReply({content: "자본이 10코인 이하로 남아, 게임이 종료되었습니다.", embeds : [nowEmbed], components: []})
+    await i.editReply({ content: "자본이 10코인 이하로 남아, 게임이 종료되었습니다.", embeds: [nowEmbed], components: [] })
     nowUser.money += amount
     userRepository.save(nowUser)
   }

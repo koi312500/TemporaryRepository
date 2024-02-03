@@ -1,7 +1,7 @@
 import fs from 'fs'
 import axios from 'axios'
 import { Extension, applicationCommand, listener, option } from '@pikokr/command.ts'
-import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction, Message} from 'discord.js'
+import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction, Message } from 'discord.js'
 
 interface ConversationItem {
   id: string
@@ -12,32 +12,32 @@ interface KoiDB {
   conversations: ConversationItem[]
 }
 
-const jsonFile = fs.readFileSync('./resource/conversation-data.json', 'utf8')
-const jsonData: KoiDB  = JSON.parse(jsonFile)
-let messageList = jsonData.conversations
+const conversationFile = fs.readFileSync('./resource/conversation-data.json', 'utf8')
+const conversationData: KoiDB = JSON.parse(conversationFile)
+const messageList = conversationData.conversations
 
 class HelloExtension extends Extension {
   @listener({ event: 'ready' })
   async ready() {
     this.logger.info(`Logged in as ${this.client.user?.tag}`)
     await this.commandClient.fetchOwners()
-  } 
+  }
 
   @listener({ event: 'applicationCommandInvokeError', emitter: 'cts' })
   async errorHandler(err: Error) {
     this.logger.error(err)
   }
 
-  @listener({ event: 'messageCreate', emitter: 'discord'})
+  @listener({ event: 'messageCreate', emitter: 'discord' })
   async messageHandle(msg: Message) {
-    if (!msg.content.startsWith('코이야 ')){
+    if (!msg.content.startsWith('코이야 ')) {
       return
     }
-    
+
     const keyword = msg.content.slice(4)
     const answer = messageList.find((message) => message.id.includes(keyword))
 
-    if(!answer){
+    if (!answer) {
       return msg.reply('내가 모르는 말이야...!')
     }
 
@@ -50,7 +50,7 @@ class HelloExtension extends Extension {
     description: 'Learn reaction by Koi_Bot',
   })
   async learnCommand(
-    i: ChatInputCommandInteraction, 
+    i: ChatInputCommandInteraction,
     @option({
       type: ApplicationCommandOptionType.String,
       name: 'keyword',
@@ -66,14 +66,13 @@ class HelloExtension extends Extension {
     })
     reaction: string,) {
 
-    messageList = 
-    [...messageList, {
+    messageList.push({
       "id": keyword,
       "output": reaction
-    }]
+    })
 
     const dataDB: KoiDB = {
-      conversations : messageList
+      conversations: messageList
     }
     const dataJSON = JSON.stringify(dataDB)
 
