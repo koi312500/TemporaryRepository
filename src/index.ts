@@ -2,7 +2,7 @@ import { config } from './config'
 import { CustomizedCommandClient } from './structures'
 import { Client } from 'discord.js'
 import "reflect-metadata"
-import { UserDB } from '../entities/UserDB'
+import { UserDB } from './entities/UserDB'
 import { DataSource } from 'typeorm'
 
 const client = new Client({
