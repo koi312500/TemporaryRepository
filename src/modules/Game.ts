@@ -1,6 +1,6 @@
 import fs from 'fs'
-import { Extension, applicationCommand, option, CommandClient, ComponentHookFn, createComponentHook, createCheckDecorator } from '@pikokr/command.ts'
-import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, BaseInteraction, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, Interaction, Message } from 'discord.js'
+import { Extension, applicationCommand, option, CommandClient, createCheckDecorator } from '@pikokr/command.ts'
+import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, BaseInteraction, ButtonBuilder, ButtonInteraction, ButtonStyle, ChatInputCommandInteraction, ComponentType, DiscordAPIError, EmbedBuilder, Interaction, Message, User } from 'discord.js'
 import { UserEntity } from "../entities/UserEntity"
 import { AppDataSource } from "../index"
 
@@ -8,68 +8,49 @@ const cooldown = new Set<string>()
 const continunityCooldown = new Set<String>()
 
 interface CompanyOutputItem {
-  id: number
+  type: string
   name: string
   output: string[]
 }
 
-interface KoiDB2 {
+interface CompanyOutputDB {
   companyOutputs: CompanyOutputItem[]
 }
 
-const jsonFile = fs.readFileSync('./resource/company-data.json', 'utf8')
-const jsonData: KoiDB2 = JSON.parse(jsonFile)
-const outputList = jsonData.companyOutputs
+enum companyType {
+  BANKRUPTCY = "0",
+  LOSS = "1",
+  NORMAL = "2",
+  PROFIT = "3",
+  BIGPROFIT = "4",
+  VERYBIGPROFIT = "5"
+}
+
+const companyOutputJson = fs.readFileSync('./resources/company-data.json', 'utf8')
+const companyOutputData: CompanyOutputDB = JSON.parse(companyOutputJson)
+const companyOutputList = companyOutputData.companyOutputs
 const userRepository = AppDataSource.getRepository(UserEntity)
 
 export const registerOnly = createCheckDecorator(async (client: CommandClient, i: Interaction | Message) => {
-  let isRegistered = false
+  let koiUser: User
+  if (i instanceof BaseInteraction)
+    koiUser = i.user
+  else if (i instanceof Message)
+    koiUser = i.author
+  else
+    throw new Error("registerOnlyError")
 
-  if (i instanceof BaseInteraction) {
-    isRegistered = await userRepository.existsBy({ id: i.user.id })
-  } else if (i instanceof Message) {
-    isRegistered = await userRepository.existsBy({ id: i.author.id })
-  }
-
-  if (isRegistered) {
+  if (await userRepository.existsBy({ id: koiUser.id }))
     return
-  }
-  await i.channel?.send("등록이 된걸까...?")
 
-  throw new Error("registerOnlyError")
+  const user = new UserEntity()
+  user.id = koiUser.id
+  user.name = koiUser.username
+
+  await userRepository.save(user)
 })
 
 class GameExtension extends Extension {
-  @applicationCommand({
-    name: '등록',
-    type: ApplicationCommandType.ChatInput,
-    description: 'Register user to Koi_Bot',
-  })
-  async registerCommand(
-    i: ChatInputCommandInteraction,
-    @option({
-      type: ApplicationCommandOptionType.String,
-      name: 'nickname',
-      description: 'Your nickname to Koi_Bot',
-      required: true,
-    })
-    name: string,) {
-
-    await i.deferReply()
-    const nowUser = await userRepository.findOneBy({
-      id: i.user.id,
-    })
-    if (nowUser) {
-      return i.editReply("이미 등록을 마치셨어요!")
-    }
-    const user = new UserEntity()
-    user.id = i.user.id
-    user.name = name
-
-    await userRepository.save(user)
-    await i.editReply("Register complete!")
-  }
-
   @registerOnly
   @applicationCommand({
     name: '출석',
@@ -84,9 +65,8 @@ class GameExtension extends Extension {
     if (!nowUser)
       return i.editReply("먼가 이상한데")
 
-    if (cooldown.has(nowUser.id)) {
+    if (cooldown.has(nowUser.id))
       return i.editReply("이 명령어는 23시간마다 사용할 수 있어요! 기다려 주세요!")
-    }
 
     if (continunityCooldown.has(nowUser.id)) {
       nowUser.money += 150
@@ -130,19 +110,21 @@ class GameExtension extends Extension {
       description: 'Company starting money',
       required: true,
     })
-    amount: number,) {
-    i.deferReply()
+    startCoin: number,) {
+    await i.deferReply()
 
-    const nowUser = await userRepository.findOneBy({
+    const nowUser = (await userRepository.findOneBy({
       id: i.user.id,
-    })
-    if (!nowUser)
-      return i.editReply("먼가 이상한데")
+    }))!
 
-    if (nowUser.money < amount)
+    if (nowUser.money < startCoin)
       return i.editReply("돈 없으면서 사기치지 마라")
 
-    nowUser.money -= amount
+    if (nowUser.money <= 10)
+      return i.editReply("초기 자본은 10코인을 초과해야 해..")
+
+    nowUser.money -= startCoin
+    userRepository.save(nowUser)
 
     const nowEmbed = new EmbedBuilder()
       .setColor(0x0ab1c2)
@@ -150,8 +132,6 @@ class GameExtension extends Extension {
       .setDescription("현재 턴 수 : 0")
       .setTimestamp()
       .setFooter({ text: `${i.user.username}님의 '/창업' 명령어` })
-
-    await i.editReply({ embeds: [nowEmbed] })
 
     const continueButton = new ButtonBuilder()
       .setCustomId('continue')
@@ -166,45 +146,44 @@ class GameExtension extends Extension {
     const row = new ActionRowBuilder<ButtonBuilder>()
       .addComponents(continueButton, stopButton)
 
-    const startCoin = amount
+    let amount = startCoin
     let turn = 0
     while (amount > 10) {
       amount = amount - 5
       const opt = Math.random() * 100
-      let earn = Math.random()
-      let type = 0
+      let earn = Math.random(), type: string
       if (opt <= 5) {
-        type = 0
+        type = companyType.BANKRUPTCY
         earn = -100
       }
       else if (opt <= 25) {
-        type = 1
+        type = companyType.LOSS
         earn = Math.round(-(10 + earn * 20))
       }
       else if (opt <= 75) {
-        type = 2
+        type = companyType.NORMAL
         earn = Math.round(-5 + earn * 10)
       }
       else if (opt <= 95) {
-        type = 3
+        type = companyType.PROFIT
         earn = Math.round(10 + earn * 20)
       }
       else if (opt <= 99.5) {
-        type = 4
+        type = companyType.BIGPROFIT
         earn = Math.round(100 + earn * 100)
       }
       else {
-        type = 5
+        type = companyType.VERYBIGPROFIT
         earn = 500
       }
       amount = Math.round(amount + amount * earn / 100)
       turn = turn + 1
 
-      const answerList = outputList.find((message) => message.id == type)?.output
-      const name = outputList.find((message) => message.id == type)?.name
+      const answerList = companyOutputList.find((message) => message.type == type)?.output
+      const answerTitle = companyOutputList.find((message) => message.type == type)?.name
       const answer = answerList ? answerList[Math.floor(Math.random() * answerList.length)] : ""
       nowEmbed.setFields(
-        { name: `${name}`, value: `${answer} (${earn}%)` },
+        { name: `${answerTitle}`, value: `${answer} (${earn}%)` },
         { name: '보유 자금', value: `${amount}코인 (초기 투자금 : ${startCoin}코인 / 유지비 5코인)` },
       )
       nowEmbed.setDescription(`현재 턴 수 : ${turn}`)
@@ -223,21 +202,22 @@ class GameExtension extends Extension {
           else {
             await confirmation.update({})
           }
-        } catch (e) {
-          await i.editReply({ content: "반응이 감지되지 않아, 게임이 종료되었습니다.", embeds: [nowEmbed], components: [] })
+        } catch (err) {
           nowUser.money += amount
           userRepository.save(nowUser)
+          await i.editReply({ content: "반응이 감지되지 않아, 게임이 종료되었습니다.", embeds: [nowEmbed], components: [] })
           return
         }
-      } catch (e) {
-        await i.channel!.send(`${i.user} 메세지가 삭제된거 가타...! 너 혹시 돈 날려서 삭제한건... 아니지?\n메세지를 삭제하면 초기자금만 날라가니까 참고해...!`)
-        userRepository.save(nowUser)
-        return
+      } catch (err) {
+        if (err instanceof DiscordAPIError)
+          return i.channel?.send(`${i.user} 메세지가 삭제된거 가타...! 너 혹시 돈 날려서 삭제한건... 아니지?\n메세지를 삭제하면 초기자금만 날라가니까 참고해...!`)
+        else
+          return i.channel?.send(`알 수 없는 오류가 발생했습니다!\n${err}`)
       }
     }
-    await i.editReply({ content: "자본이 10코인 이하로 남아, 게임이 종료되었습니다.", embeds: [nowEmbed], components: [] })
     nowUser.money += amount
     userRepository.save(nowUser)
+    await i.editReply({ content: "자본이 10코인 이하로 남아, 게임이 종료되었습니다.", embeds: [nowEmbed], components: [] })
   }
 }
 
