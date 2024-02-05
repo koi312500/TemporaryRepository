@@ -34,7 +34,10 @@ const userRepository = AppDataSource.getRepository(UserEntity)
 export const registerOnly = createCheckDecorator(async (client: CommandClient, i: Interaction | Message) => {
   let koiUser: User
   if (i instanceof BaseInteraction)
-    koiUser = i.user
+    if (i.isChatInputCommand())
+      koiUser = i.user
+    else
+      throw new Error("registerOnlyError")
   else if (i instanceof Message)
     koiUser = i.author
   else
@@ -43,11 +46,54 @@ export const registerOnly = createCheckDecorator(async (client: CommandClient, i
   if (await userRepository.existsBy({ id: koiUser.id }))
     return
 
-  const user = new UserEntity()
-  user.id = koiUser.id
-  user.name = koiUser.username
+  const nowEmbed = new EmbedBuilder()
+    .setColor(0x0ab1c2)
+    .setTitle("Koi_Bot 등록")
+    .setDescription(`${koiUser.username}님은 현재 Koi_Bot에 등록되지 않았습니다.`)
+    .setFields(
+      { name: '상태', value: `${koiUser.username}께서는 현재 Koi_Bot에 가입 및 약관 동의를 하지 않으셨기 때문에, 기능을 사용하실 수 없습니다.` },
+      {
+        name: '약관', value: `Koi_Bot을 사용하시면서, 발생하는 모든 메세지 기록이 특별한 명시 없이 저장되는 것이 허용됩니다.
+      Koi_Bot에 당신의 Discord Nickname, ID가 제공됩니다.`},
+      { name: 'How to agree', value: `아래의 ⭕ 을 눌러 약관에 동의하고, 다양한 기능들을 사용해 보세요!` }
+    )
+    .setTimestamp()
+    .setFooter({ text: `${koiUser.username}님의 약관 동의 Embed` })
 
-  await userRepository.save(user)
+  const continueButton = new ButtonBuilder()
+    .setCustomId('accepted')
+    .setEmoji('⭕')
+    .setLabel('동의합니다.')
+    .setStyle(ButtonStyle.Primary)
+
+  const stopButton = new ButtonBuilder()
+    .setCustomId('notaccepted')
+    .setEmoji('✖️')
+    .setLabel('동의하지 않습니다.')
+    .setStyle(ButtonStyle.Danger)
+
+  const row = new ActionRowBuilder<ButtonBuilder>()
+    .addComponents(continueButton, stopButton)
+
+  const msg = await i.reply({ embeds: [nowEmbed], components: [row] })
+  try {
+    const collectorFilter = (msg: ButtonInteraction) => msg.user.id === koiUser.id;
+    const confirmation = await msg.awaitMessageComponent({ filter: collectorFilter, componentType: ComponentType.Button, time: 30_000 });
+    if (confirmation.customId === 'accepted') {
+      await confirmation.update({ content: "약관을 동의하셨습니다! 명령어를 다시 사용해 주세요!", components: [] })
+      const user = new UserEntity()
+      user.id = koiUser.id
+      user.name = koiUser.username
+
+      await userRepository.save(user)
+    }
+    else {
+      await confirmation.update({ content: "약관에 동의하지 않으셨습니다.", components: [] })
+    }
+  } catch (err) {
+    await msg.edit({ content: "반응이 감지되지 않아, 동의 처리가 진행되지 않았습니다.", components: [] })
+  }
+  throw new Error("registerOnlyError")
 })
 
 class GameExtension extends Extension {
@@ -190,8 +236,8 @@ class GameExtension extends Extension {
 
       try {
         const msg = await i.editReply({ embeds: [nowEmbed], components: [row] })
-        const collectorFilter = (msg: ButtonInteraction) => msg.user.id === i.user.id;
         try {
+          const collectorFilter = (msg: ButtonInteraction) => msg.user.id === i.user.id;
           const confirmation = await msg.awaitMessageComponent({ filter: collectorFilter, componentType: ComponentType.Button, time: 30_000 });
           if (confirmation.customId === 'stop') {
             await confirmation.update({ content: "게임이 종료되었습니다.", embeds: [nowEmbed], components: [] })

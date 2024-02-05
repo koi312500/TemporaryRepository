@@ -25,6 +25,8 @@ class HelloExtension extends Extension {
 
   @listener({ event: 'applicationCommandInvokeError', emitter: 'cts' })
   async errorHandler(err: Error) {
+    if (err.message == "registerOnlyError")
+      return
     this.logger.error(err)
   }
 
