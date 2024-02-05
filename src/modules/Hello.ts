@@ -1,7 +1,17 @@
-import fs from 'fs'
+import {
+  Extension,
+  applicationCommand,
+  listener,
+  option,
+} from '@pikokr/command.ts'
 import axios from 'axios'
-import { Extension, applicationCommand, listener, option } from '@pikokr/command.ts'
-import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction, Message } from 'discord.js'
+import {
+  ApplicationCommandOptionType,
+  ApplicationCommandType,
+  ChatInputCommandInteraction,
+  Message,
+} from 'discord.js'
+import fs from 'fs'
 
 interface ConversationItem {
   id: string
@@ -12,7 +22,10 @@ interface KoiDB {
   conversations: ConversationItem[]
 }
 
-const conversationFile = fs.readFileSync('./resources/conversation-data.json', 'utf8')
+const conversationFile = fs.readFileSync(
+  './resources/conversation-data.json',
+  'utf8'
+)
 const conversationData: KoiDB = JSON.parse(conversationFile)
 const messageList = conversationData.conversations
 
@@ -25,8 +38,7 @@ class HelloExtension extends Extension {
 
   @listener({ event: 'applicationCommandInvokeError', emitter: 'cts' })
   async errorHandler(err: Error) {
-    if (err.message == "registerOnlyError")
-      return
+    if (err.message == 'registerOnlyError') return
     this.logger.error(err)
   }
 
@@ -37,11 +49,15 @@ class HelloExtension extends Extension {
     }
 
     const keyword = msg.content.slice(4)
-    const answer = messageList.find((message) => message.id.includes(keyword))
+    const answers: ConversationItem[] = messageList.filter((message) =>
+      message.id.includes(keyword)
+    )
 
-    if (!answer) {
+    if (answers.length == 0) {
       return msg.reply('내가 모르는 말이야...!')
     }
+
+    const answer = answers[Math.floor(Math.random() * answers.length)]
 
     await msg.reply(answer.output)
   }
@@ -66,21 +82,23 @@ class HelloExtension extends Extension {
       description: 'Input the command output',
       required: true,
     })
-    reaction: string,) {
-
+    reaction: string
+  ) {
     messageList.push({
-      "id": keyword,
-      "output": reaction
+      id: keyword,
+      output: reaction,
     })
 
     const dataDB: KoiDB = {
-      conversations: messageList
+      conversations: messageList,
     }
     const dataJSON = JSON.stringify(dataDB)
 
     fs.writeFileSync('./resources/conversation-data.json', dataJSON)
 
-    await i.reply(`${keyword} 라고 물어보면 ${reaction}이라고 대답하면 된다고요? 알겠어요!`)
+    await i.reply(
+      `${keyword} 라고 물어보면 ${reaction}이라고 대답하면 된다고요? 알겠어요!`
+    )
   }
 
   @applicationCommand({
@@ -89,9 +107,8 @@ class HelloExtension extends Extension {
     description: 'Test command',
   })
   async ping(i: ChatInputCommandInteraction) {
-    await i.reply("Hello, KOI3125!")
+    await i.reply('Hello, KOI3125!')
   }
-
 }
 
 export const setup = async () => {

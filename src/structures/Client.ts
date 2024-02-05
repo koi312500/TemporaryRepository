@@ -19,7 +19,8 @@ class DevModule extends Extension {
     await i.deferReply()
     const result = await this.commandClient.registry.reloadModules()
     await i.editReply(
-      `Succeed: ${result.filter((x) => x.result).length} Error: ${result.filter((x) => !x.result).length
+      `Succeed: ${result.filter((x) => x.result).length} Error: ${
+        result.filter((x) => !x.result).length
       }`
     )
   }
