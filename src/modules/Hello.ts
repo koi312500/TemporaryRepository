@@ -78,7 +78,7 @@ class HelloExtension extends Extension {
     }
     const dataJSON = JSON.stringify(dataDB)
 
-    fs.writeFileSync('data.json', dataJSON)
+    fs.writeFileSync('./resources/conversation-data.json', dataJSON)
 
     await i.reply(`${keyword} 라고 물어보면 ${reaction}이라고 대답하면 된다고요? 알겠어요!`)
   }
@@ -89,7 +89,7 @@ class HelloExtension extends Extension {
     description: 'Test command',
   })
   async ping(i: ChatInputCommandInteraction) {
-    await i.reply(`Hello, hon20ke!`)
+    await i.reply("Hello, KOI3125!")
   }
 
 }

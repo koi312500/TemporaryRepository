@@ -80,7 +80,7 @@ export const registerOnly = createCheckDecorator(async (client: CommandClient, i
     const collectorFilter = (msg: ButtonInteraction) => msg.user.id === koiUser.id;
     const confirmation = await msg.awaitMessageComponent({ filter: collectorFilter, componentType: ComponentType.Button, time: 30_000 });
     if (confirmation.customId === 'accepted') {
-      await confirmation.update({ content: "약관을 동의하셨습니다! 명령어를 다시 사용해 주세요!", components: [] })
+      await confirmation.update({ content: "약관을 동의하셨습니다! 명령어를 다시 사용해 주세요!", embeds: [], components: [] })
       const user = new UserEntity()
       user.id = koiUser.id
       user.name = koiUser.username
@@ -88,10 +88,10 @@ export const registerOnly = createCheckDecorator(async (client: CommandClient, i
       await userRepository.save(user)
     }
     else {
-      await confirmation.update({ content: "약관에 동의하지 않으셨습니다.", components: [] })
+      await confirmation.update({ content: "약관에 동의하지 않으셨습니다.", embeds: [], components: [] })
     }
   } catch (err) {
-    await msg.edit({ content: "반응이 감지되지 않아, 동의 처리가 진행되지 않았습니다.", components: [] })
+    await msg.edit({ content: "반응이 감지되지 않아, 약관 동의 처리가 되지 않았습니다.", embeds: [], components: [] })
   }
   throw new Error("registerOnlyError")
 })
