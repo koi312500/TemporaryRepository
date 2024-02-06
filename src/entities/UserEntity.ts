@@ -1,13 +1,13 @@
-import { Column, Entity, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm"
+import { Column, Entity, PrimaryColumn } from 'typeorm'
 
 @Entity()
 export class UserEntity {
-    @PrimaryColumn()
-    id!: string
+  @PrimaryColumn()
+  id!: string
 
-    @Column()
-    name: string = "";
+  @Column('string')
+  name = ''
 
-    @Column("int")
-    money: number = 0
+  @Column('int')
+  money = 0
 }

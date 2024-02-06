@@ -1,6 +1,17 @@
+import {
+  Extension,
+  applicationCommand,
+  listener,
+  option,
+} from '@pikokr/command.ts'
 import axios from 'axios'
-import { Extension, applicationCommand, listener, option } from '@pikokr/command.ts'
-import { ApplicationCommandOptionType, ApplicationCommandType, ChatInputCommandInteraction, EmbedBuilder, Message } from 'discord.js'
+import {
+  ApplicationCommandOptionType,
+  ApplicationCommandType,
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+  Message,
+} from 'discord.js'
 
 interface AuthorItem {
   id: string
@@ -35,16 +46,21 @@ class NovelExtension extends Extension {
       description: 'Input the novel name',
       required: false,
     })
-    title: string) {
-
+    title: string
+  ) {
     await i.deferReply()
-    let novelNow: NovelItem;
+    let novelNow: NovelItem
     try {
-      const { data } = await axios.get<NovelItem[]>('https://muvel.kimustory.net/api/novels' + (title ? `?title=${title}` : ''))
+      const { data } = await axios.get<NovelItem[]>(
+        'https://muvel.kimustory.net/api/novels' +
+          (title ? `?title=${title}` : '')
+      )
       novelNow = data[0]
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        return i.editReply('API 통신 오류입니다. 잠시후 다시 시도해 주시기 바랍니다.')
+        return i.editReply(
+          'API 통신 오류입니다. 잠시후 다시 시도해 주시기 바랍니다.'
+        )
       }
       this.logger.error(error)
       return i.editReply(`오류가 발생했습니다. :(`)
@@ -65,10 +81,8 @@ class NovelExtension extends Extension {
       )
       .setFooter({ text: 'Result of command /뮤블검색' })
 
-
     await i.editReply({ embeds: [novelEmbed] })
   }
-
 }
 
 export const setup = async () => {

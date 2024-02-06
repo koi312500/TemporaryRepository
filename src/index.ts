@@ -1,8 +1,8 @@
 import { config } from './config'
+import { UserEntity } from './entities/UserEntity'
 import { CustomizedCommandClient } from './structures'
 import { Client } from 'discord.js'
-import "reflect-metadata"
-import { UserEntity } from './entities/UserEntity'
+import 'reflect-metadata'
 import { DataSource } from 'typeorm'
 
 const client = new Client({
@@ -12,11 +12,11 @@ const client = new Client({
 const cts = new CustomizedCommandClient(client)
 
 export const AppDataSource = new DataSource({
-  type: "sqlite",
-  database: "userDB.sql",
+  type: 'sqlite',
+  database: 'userDB.sql',
   entities: [UserEntity],
   synchronize: true,
-  logging: false
+  logging: false,
 })
 
 const start = async () => {
