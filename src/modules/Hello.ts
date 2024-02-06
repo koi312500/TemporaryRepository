@@ -4,7 +4,6 @@ import {
   listener,
   option,
 } from '@pikokr/command.ts'
-import axios from 'axios'
 import {
   ApplicationCommandOptionType,
   ApplicationCommandType,
