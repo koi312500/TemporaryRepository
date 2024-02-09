@@ -5,7 +5,7 @@ export class UserEntity {
   @PrimaryColumn()
   id!: string
 
-  @Column('string')
+  @Column('text')
   name = ''
 
   @Column('int')
