@@ -84,6 +84,8 @@ class HelloExtension extends Extension {
     })
     reaction: string
   ) {
+    if (reaction.includes('@'))
+      return i.reply('너 멘션을 포함하고 있는거지! 너 그러면 안되는거야!')
     messageList.push({
       id: keyword,
       output: reaction,
@@ -95,7 +97,6 @@ class HelloExtension extends Extension {
     const dataJSON = JSON.stringify(dataDB)
 
     fs.writeFileSync('./resources/conversation-data.json', dataJSON)
-
     await i.reply(
       `${keyword} 라고 물어보면 ${reaction}이라고 대답하면 된다고요? 알겠어요!`
     )
@@ -117,7 +118,7 @@ class HelloExtension extends Extension {
     description: "Developer's command",
   })
   async stop(i: ChatInputCommandInteraction) {
-    await i.reply('Bot stoped.')
+    await i.reply('코이 사라질게...')
     process.exit()
   }
 }
