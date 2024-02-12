@@ -116,6 +116,46 @@ class HelloExtension extends Extension {
   }
 
   @applicationCommand({
+    name: '잊어',
+    type: ApplicationCommandType.ChatInput,
+    description: 'Forget reaction by Koi_Bot',
+  })
+  async forgetCommand(
+    i: ChatInputCommandInteraction,
+    @option({
+      type: ApplicationCommandOptionType.String,
+      name: 'keyword',
+      description: 'Input the command input',
+      required: true,
+    })
+    keyword: string
+  ) {
+    const answers: ConversationItem[] = messageList.filter((message) =>
+      message.id.includes(keyword)
+    )
+
+    if (answers.length == 0) {
+      await i.reply('배운적도 없는 말이야...!')
+      return
+    }
+    
+    messageList.splice(messageList.keys(json).indexOf(keyword), 1)
+
+    const dataDB: KoiDB = {
+      conversations: messageList,
+    }
+    const dataJSON = JSON.stringify(dataDB)
+
+    fs.writeFileSync('./resources/conversation-data.json', dataJSON)
+    await i.reply(
+      `${keyword} ${end_check(
+        keyword,
+        '이'
+      )}라는게 뭐죠?`
+    )
+  }
+
+  @applicationCommand({
     name: '안녕',
     type: ApplicationCommandType.ChatInput,
     description: 'Test command',
