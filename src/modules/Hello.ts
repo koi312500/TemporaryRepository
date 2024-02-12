@@ -139,7 +139,7 @@ class HelloExtension extends Extension {
       return
     }
     
-    messageList.splice(messageList.keys(json).indexOf(keyword), 1)
+    messageList.splice(messageList.keys(messageList).indexOf(keyword), 1)
 
     const dataDB: KoiDB = {
       conversations: messageList,
