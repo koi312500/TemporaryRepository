@@ -14,5 +14,5 @@ export function end_check(word: string, yes = '', no = ''): string {
 
   const last_unicode = word.charCodeAt(word.length - 1)
   if (last_unicode < 44032 || last_unicode > 55203) return molu
-  return last_unicode % 28 ? yes : no
+  return (last_unicode - 44032) % 28 ? yes : no
 }
