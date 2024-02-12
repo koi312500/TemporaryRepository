@@ -47,6 +47,7 @@ class HelloExtension extends Extension {
     if (!msg.content.startsWith('코이야 ')) {
       return
     }
+    if (msg.author.bot) return
 
     const keyword = msg.content.slice(4)
     const answers: ConversationItem[] = messageList.filter((message) =>
