@@ -87,10 +87,10 @@ class HelloExtension extends Extension {
   ) {
     if (reaction.includes('@'))
       return i.reply('너 멘션을 포함하고 있는거지! 너 그러면 안되는거야!')
-    if (reaction.length > 1000)
+    if (reaction.length > 900 || keyword.length > 900)
       return i.reply(
         '그렇게 긴 문장을 나보고 외우게 시키다니... 코이는 바보라서 그런거 못 외우니까..\
-        그런건 나한테 시키지 말기! (1500자 이상 텍스트는 등록되지 않습니다.)'
+        \n그런건 나한테 시키지 말기! (900자 이상 텍스트는 등록되지 않습니다.)'
       )
     messageList.push({
       id: keyword,
