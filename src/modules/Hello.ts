@@ -1,3 +1,4 @@
+import { end_check } from '../utils/korean'
 import {
   Extension,
   applicationCommand,
@@ -104,7 +105,13 @@ class HelloExtension extends Extension {
 
     fs.writeFileSync('./resources/conversation-data.json', dataJSON)
     await i.reply(
-      `${keyword} 라고 물어보면 ${reaction}이라고 대답하면 된다고요? 알겠어요!`
+      `${keyword} ${end_check(
+        keyword,
+        '이'
+      )}라고 물어보면 ${reaction} ${end_check(
+        reaction,
+        '이'
+      )}라고 대답하면 된다고요? 알겠어요!`
     )
   }
 
