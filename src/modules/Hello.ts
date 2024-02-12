@@ -3,6 +3,7 @@ import {
   applicationCommand,
   listener,
   option,
+  ownerOnly,
 } from '@pikokr/command.ts'
 import {
   ApplicationCommandOptionType,
@@ -107,6 +108,17 @@ class HelloExtension extends Extension {
   })
   async ping(i: ChatInputCommandInteraction) {
     await i.reply('Hello, KOI3125!')
+  }
+
+  @ownerOnly
+  @applicationCommand({
+    name: 'stop',
+    type: ApplicationCommandType.ChatInput,
+    description: "Developer's command",
+  })
+  async stop(i: ChatInputCommandInteraction) {
+    await i.reply('Bot stoped.')
+    process.exit()
   }
 }
 
