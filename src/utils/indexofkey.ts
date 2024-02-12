@@ -1,4 +1,4 @@
-export function findIndexByKey(key: string): number {
+export function findIndexByKey(jsonArray, key: string): number {
   for (let i = 0; i < jsonArray.length; i++) {
     if (jsonArray[i].key === key) {
       return i;
