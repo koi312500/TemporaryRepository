@@ -1,5 +1,4 @@
 import { end_check } from '../utils/korean'
-import { findIndexByKey } from '../utils/indexofkey'
 import {
   Extension,
   applicationCommand,
@@ -139,8 +138,12 @@ class HelloExtension extends Extension {
       await i.reply('배운적도 없는 말이야...!')
       return
     }
-    
-    messageList.splice(${findIndexByKey(keyword, messageList)}, 1)
+
+    for (let i = 0; i < messageList.length; i++) {
+      if (messageList[i].key === keyword) {
+        messageList.splice(i, 1)
+      }
+    }
 
     const dataDB: KoiDB = {
       conversations: messageList,
