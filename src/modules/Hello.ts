@@ -140,7 +140,7 @@ class HelloExtension extends Extension {
     }
 
     for (let i = 0; i < messageList.length; i++) {
-      if (messageList[i].key === keyword) {
+      if (messageList[i].id === keyword) {
         messageList.splice(i, 1)
       }
     }
@@ -151,12 +151,7 @@ class HelloExtension extends Extension {
     const dataJSON = JSON.stringify(dataDB)
 
     fs.writeFileSync('./resources/conversation-data.json', dataJSON)
-    await i.reply(
-      `${keyword} ${end_check(
-        keyword,
-        '이'
-      )}라는게 뭐죠?`
-    )
+    await i.reply(`${keyword} ${end_check(keyword, '이')}라는게 뭐죠?`)
   }
 
   @applicationCommand({
