@@ -1,7 +1,6 @@
 import { UserEntity } from '../entities/UserEntity'
 import { AppDataSource } from '../index'
 import {
-  CommandClient,
   Extension,
   applicationCommand,
   createCheckDecorator,
@@ -56,7 +55,7 @@ const companyOutputList = companyOutputData.companyOutputs
 const userRepository = AppDataSource.getRepository(UserEntity)
 
 export const registerOnly = createCheckDecorator(
-  async (_: CommandClient, i: Interaction | Message) => {
+  async (_, i: Interaction | Message) => {
     let koiUser: User
     if (i instanceof BaseInteraction)
       if (i.isChatInputCommand()) koiUser = i.user
