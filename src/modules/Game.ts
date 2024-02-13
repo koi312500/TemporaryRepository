@@ -1,7 +1,6 @@
 import { UserEntity } from '../entities/UserEntity'
 import { AppDataSource } from '../index'
 import {
-  CommandClient,
   Extension,
   applicationCommand,
   createCheckDecorator,
@@ -56,7 +55,7 @@ const companyOutputList = companyOutputData.companyOutputs
 const userRepository = AppDataSource.getRepository(UserEntity)
 
 export const registerOnly = createCheckDecorator(
-  async (client: CommandClient, i: Interaction | Message) => {
+  async (_, i: Interaction | Message) => {
     let koiUser: User
     if (i instanceof BaseInteraction)
       if (i.isChatInputCommand()) koiUser = i.user
@@ -213,6 +212,7 @@ class GameExtension extends Extension {
   ) {
     await i.deferReply()
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const nowUser = (await userRepository.findOneBy({
       id: i.user.id,
     }))!

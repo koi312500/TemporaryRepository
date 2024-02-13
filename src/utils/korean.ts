@@ -5,7 +5,7 @@
  * @param yes 주어진 단어가 받침이 있을 때 이어질 문자열
  * @param no 주어진 단어가 받침이 없을 때 이어질 문자열
  */
-export function end_check(word: string, yes = '', no = ''): string {
+export const end_check = (word: string, yes = '', no = '') => {
   let molu = `(${yes}/${no})`
   if (yes.length == 0) molu = `(${no})`
   if (no.length == 0) molu = `(${yes})`
