@@ -1,7 +1,10 @@
-config.json
 node_modules
 .idea
 dist
 
+# vscode
+.vscode
+
 # User config
 userDB.sql
+config.json
