@@ -213,6 +213,7 @@ class GameExtension extends Extension {
   ) {
     await i.deferReply()
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const nowUser = (await userRepository.findOneBy({
       id: i.user.id,
     }))!
