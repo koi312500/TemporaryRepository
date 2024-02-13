@@ -51,8 +51,8 @@ class HelloExtension extends Extension {
     if (msg.author.bot) return
 
     const keyword = msg.content.slice(4)
-    const answers: ConversationItem[] = messageList.filter((message) =>
-      message.id.includes(keyword)
+    const answers: ConversationItem[] = messageList.filter(
+      (message) => message.id == keyword
     )
 
     if (answers.length == 0) {
