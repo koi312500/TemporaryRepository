@@ -56,7 +56,7 @@ const companyOutputList = companyOutputData.companyOutputs
 const userRepository = AppDataSource.getRepository(UserEntity)
 
 export const registerOnly = createCheckDecorator(
-  async (client: CommandClient, i: Interaction | Message) => {
+  async (_: CommandClient, i: Interaction | Message) => {
     let koiUser: User
     if (i instanceof BaseInteraction)
       if (i.isChatInputCommand()) koiUser = i.user

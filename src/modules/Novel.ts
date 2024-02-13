@@ -1,16 +1,10 @@
-import {
-  Extension,
-  applicationCommand,
-  listener,
-  option,
-} from '@pikokr/command.ts'
+import { Extension, applicationCommand, option } from '@pikokr/command.ts'
 import axios from 'axios'
 import {
   ApplicationCommandOptionType,
   ApplicationCommandType,
   ChatInputCommandInteraction,
   EmbedBuilder,
-  Message,
 } from 'discord.js'
 
 interface AuthorItem {
