@@ -86,7 +86,7 @@ class HelloExtension extends Extension {
     })
     reaction: string
   ) {
-    if (reaction.includes('@'))
+    if (/<@!?(\d+)>/.test(reaction))
       return i.reply('너 멘션을 포함하고 있는거지! 너 그러면 안되는거야!')
     if (reaction.length > 900 || keyword.length > 900)
       return i.reply(
